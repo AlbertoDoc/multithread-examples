@@ -2,18 +2,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 void *threadBody(void *n) {
-    int numero = (int) n;
-    printf("%d", numero);
+    int number = (int) n;
+    printf("%d", number);
 
-    while (numero != 1) {
-        if (numero % 2 == 0) {
-            numero /= 2;
-            printf(", %d", (int) numero);
+    // Calculo do algoritmo de Collatz
+    while (number != 1) {
+        if (number % 2 == 0) {
+            number /= 2;
+            printf(", %d", (int) number);
         } else {
-            numero = 3 * numero + 1;
-            printf(", %d", (int) numero);
+            number = 3 * number + 1;
+            printf(", %d", (int) number);
         }
     }
 
@@ -26,12 +28,25 @@ void *threadBody(void *n) {
 int main() {
     int n;
 
+    float entry;
     printf("Insira o número que deseja calcular:\n");
-    scanf("%d", &n);
-    //TODO adicionar tratamento da entrada para verificar se eh um int
+
+    bool isPositiveInt = false;
+    while (!isPositiveInt) {
+        scanf("%f", &entry);
+
+        if (entry == (int) entry && (int) entry > 0) {
+            n = (int) entry;
+            isPositiveInt = true;
+        } else {
+            printf("Por favor insira um inteiro positivo:\n");
+        }
+    }
+
+    n = (int) entry;
 
     // Variavel que irá armazenar a thread filho
-    pthread_t thread_filho;
+    pthread_t child_thread;
 
     // Variavel que irá armezenar os atributos da thread
     pthread_attr_t attr;
@@ -46,7 +61,7 @@ int main() {
     long status;
 
     // Criação da thread filho
-    status = pthread_create(&thread_filho, &attr, threadBody, (void *) n);
+    status = pthread_create(&child_thread, &attr, threadBody, (void *) n);
 
     // Tratamento de erro da criação da thread filho
     if (status) {
@@ -55,7 +70,7 @@ int main() {
     }
 
     // Thread pai espera a execução da thread filho
-    status = pthread_join(thread_filho, NULL);
+    status = pthread_join(child_thread, NULL);
 
     // Tratamento de erro do metodo pthread_join
     if (status) {

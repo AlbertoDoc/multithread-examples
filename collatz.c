@@ -31,6 +31,7 @@ int main() {
     float entry;
     printf("Insira o número que deseja calcular:\n");
 
+    // Tratamento da entrada para verificar se foi inserido um int positivo
     bool isPositiveInt = false;
     while (!isPositiveInt) {
         scanf("%f", &entry);

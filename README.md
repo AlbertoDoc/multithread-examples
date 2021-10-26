@@ -1,7 +1,7 @@
 # multithread-examples
 
-To compile:
-gcc "example-name".c -lpthread
+Para compilar:
+gcc nome_do_arquivo.c -o nome_do_arquivo  -lpthread
 
 To run:
-./a.out
+./nome_do_arquivo

@@ -108,8 +108,7 @@ int main() {
 	};
 
 	// Threads para as linhas, colunas e as nove subgrades
-	pthread_t thread_rows, thread_cols;
-	pthread_t threads_grids[9];
+	pthread_t thread_rows, thread_cols, threads_grids[9];
 
 	// Inicialização das subgrades
 	for (int i = 0; i < 9; i++) {
@@ -121,7 +120,6 @@ int main() {
 	void* result_rows;
 	void* result_cols;
 	void* result_grids[9];
-
 
 	// Criação do parâmetro e threads para as linhas e colunas
 	parameters* params = createParameters(0, 0, board);

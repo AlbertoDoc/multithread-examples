@@ -6,6 +6,32 @@
 
 int escolha;
 
+typedef struct {
+    int* v1;
+    int* v2;
+    int* v3;
+} final;
+
+void mergeArrays(int arr1[], int arr2[], int n1, int n2, int arr3[]) {
+    int i = 0, j = 0, k = 0;
+ 
+    while (i < n1 && j < n2) {
+        if (arr1[i] < arr2[j]) {
+            arr3[k++] = arr1[i++];
+        } else {
+            arr3[k++] = arr2[j++];
+        }
+    }
+ 
+    while (i < n1) {
+        arr3[k++] = arr1[i++];
+    }
+ 
+    while (j < n2) {
+        arr3[k++] = arr2[j++];
+    }
+}
+
 int comparador(const void* a, const void* b) {
     int f = *((int*) a);
     int s = *((int*) b);
@@ -22,10 +48,12 @@ void* ordena_filho(void* original) {
     pthread_exit(NULL);
 }
 
-void* ordena_final(void* vetor_filho) {
-    int* check = (int*) vetor_filho;
+void* merge(void* v_final) {
+    final* v = (final*) v_final;
 
-    qsort(check, escolha, sizeof(int), comparador);
+    int tamanho = (int) floor(escolha/2);
+
+    mergeArrays(v->v1, v->v2, tamanho, tamanho, v->v3);
 
     pthread_exit(NULL);
 }
@@ -38,8 +66,8 @@ int main() {
 
     int *vetor_pai = (int*)malloc(escolha*sizeof(int));
     int *vetor_final = (int*)malloc(escolha*sizeof(int));
-    int *vetor_filho1 = (int*)malloc((floor(escolha/2))*sizeof(int));
-    int *vetor_filho2 = (int*)malloc((floor(escolha/2))*sizeof(int));
+    int *vetor_filho1 = (int*)malloc((int) (floor(escolha/2))*sizeof(int));
+    int *vetor_filho2 = (int*)malloc((int) (floor(escolha/2))*sizeof(int));
 
 
     printf("Digite os numeros que deseja ordenar\n");
@@ -77,17 +105,23 @@ int main() {
         exit(1);
     }
 
-    for(int i = 0; i<floor(escolha/2); i++) {
+    for(int i = 0; i < (int) floor(escolha/2); i++) {
         vetor_final[i] = vetor_filho1[i];
     }
 
     j = 0;
-    for(int i = floor(escolha/2); i<escolha; i++) {
+    for(int i = (int) floor(escolha/2); i<escolha; i++) {
         vetor_final[i] = vetor_filho2[j];
         j++;
     }
 
-    if (pthread_create(&t3, NULL, ordena_final, (void *)vetor_final)) {
+    final* v_final = (final*) malloc(sizeof(final));
+
+    v_final->v1 = vetor_filho1;
+    v_final->v2 = vetor_filho2;
+    v_final->v3 = vetor_final;
+
+    if (pthread_create(&t3, NULL, merge, (void *)v_final)) {
         perror("pthread_create");
         exit(1);
     }
@@ -107,7 +141,8 @@ int main() {
     free(vetor_final);
     free(vetor_filho1);
     free(vetor_filho2);
-
+    free(v_final);
+    
     pthread_exit(NULL);
     return 0;
 }

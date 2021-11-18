@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-// Struct para guardar o valor da linha, coluna, e grade
+// Struct para guardar o valor da coluna, linha, e grade
 typedef struct {
 	int col;
 	int row;
@@ -25,19 +25,23 @@ parameters* createParameters(int c, int r, int(*b)[9]) {
 void* check_rows(void* params) {
 	parameters* param = (parameters*) params;
 
+	// Posicao da linha e coluna inicial
 	int startRow = param->row;
 	int startCol = param->col;
 
 	for (int i = startRow; i < 9; i++) {
-		int row[10] = {0};
+		// Vetor com a posição das linhas
+		int row[9] = {0};
 
 		for (int j = startCol; j < 9; j++) {
+			// Valor da grade na posição i j
 			int square = param->board[i][j];
 
-			if (row[square] != 0) {
+			// Checa se a linha na posição da grade já foi visitada
+			if (row[square - 1] != 0) {
 				return (void*) 0;
 			} else {
-				row[square] = 1;
+				row[square - 1] = 1;
 			}
 		}
 	}
@@ -49,19 +53,23 @@ void* check_rows(void* params) {
 void* check_cols(void* params) {
 	parameters* param = (parameters*) params;
 
+	// Posicao da linha e coluna inicial
 	int startRow = param->row;
 	int startCol = param->col;
 
 	for (int i = startCol; i < 9; i++) {
-		int col[10] = {0};
+		// Vetor com a posição das colunas
+		int col[9] = {0};
 
 		for (int j = startRow; j < 9; j++) {
+			// Valor da grade na posição j i
 			int square = param->board[j][i];
 
-			if (col[square] != 0) {
+			// Checa se a coluna na posição da grade já foi visitada
+			if (col[square - 1] != 0) {
 				return (void*) 0;
 			} else {
-				col[square] = 1;
+				col[square - 1] = 1;
 			}
 		}
 	}
@@ -73,19 +81,23 @@ void* check_cols(void* params) {
 void* check_grid(void* params) {
 	parameters* param = (parameters*) params;
 
+	// Posicao da linha e coluna inicial
 	int startRow = param->row;
 	int startCol = param->col;
 
-	int saved[10] = {0};
+	// Vetor com a posição da subgrade
+	int saved[9] = {0};
 
 	for (int i = startRow; i < startRow + 3; i++) {
 		for (int j = startCol; j < startCol + 3; j++) {
+			// Valor da grade na posição i j
 			int square = param->board[i][j];
 
-			if (saved[square] != 0) {
+			// Checa se a subgrade na posição da grade já foi visitada
+			if (saved[square - 1] != 0) {
 				return (void*) 0;
 			} else {
-				saved[square] = 1;
+				saved[square - 1] = 1;
 			}
 		}
 	}
@@ -117,9 +129,7 @@ int main() {
 	}
 
 	// Variáveis para guardar o resultado das threads
-	void* result_rows;
-	void* result_cols;
-	void* result_grids[9];
+	void *result_rows, *result_cols, *result_grids[9];
 
 	// Criação do parâmetro e threads para as linhas e colunas
 	parameters* params = createParameters(0, 0, board);
@@ -129,10 +139,25 @@ int main() {
 		exit(1);
 	}
 
+	// Join da thread das linhas
+	if (pthread_join(thread_rows, &result_rows)) {
+		perror("pthread_create");
+		exit(1);
+	}
+
 	if (pthread_create(&thread_cols, NULL, check_cols, (void*) params)) {
 		perror("pthread_create");
 		exit(1);
 	}
+
+	// Join da thread das colunas
+	if (pthread_join(thread_cols, &result_cols)) {
+		perror("pthread_join");
+		exit(1);
+	}
+
+	// Libera a área de memória alocada pelo parâmetro
+	free(params);
 
 	// Criação dos parâmetros, threads e joins para as subgrades;
 	int x = 0, y = 0, z = 0;
@@ -164,21 +189,6 @@ int main() {
 		x += 3;
 	}
 
-	// Join das threads das linhas e das colunas
-
-	if (pthread_join(thread_rows, &result_rows)) {
-		perror("pthread_create");
-		exit(1);
-	}
-
-	if (pthread_join(thread_cols, &result_cols)){
-		perror("pthread_join");
-		exit(1);
-	}
-
-	// Libera a área de memória alocada pelo parâmetro
-	free(params);
-
 	// Checa se a solução do Sudoku é válida
 	if ( (int) result_rows == 1 && (int) result_cols == 1) {
 		for (int i = 0; i < 9; i++) {
@@ -186,7 +196,6 @@ int main() {
 				printf("A solucao para o Sudoku esta incorreta\n");
 			} 	
 		}
-
 		printf("A solucao para o Sudoku esta correta\n");
 	} else {
 		printf("A solucao para o Sudoku esta incorreta\n");
